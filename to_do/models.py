@@ -14,6 +14,7 @@ class ToDoNote(models.Model):
     task_description = models.TextField(default="", verbose_name="Описание задачи")
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     public = models.BooleanField(default=False, verbose_name="Опубликовать") #todo публичные должны видеть все пользователи
+    important = models.BooleanField(default=False, verbose_name="Важность")
     create_at = models.DateTimeField(auto_now_add=True, verbose_name="Время создания")
     update_at = models.DateTimeField(auto_now=True, verbose_name="Время обновления")
     time_point = models.DateTimeField(default=dateTimePoint, blank=True, verbose_name="Срок выполнения") #todo add calender
