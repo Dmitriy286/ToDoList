@@ -91,20 +91,21 @@ class TestNoteDetailAPIView(APITestCase):
     #     new_title = "Test title"
     #     ToDoNote.objects.create(title=new_title, author=test_user)
 
+
     @classmethod
     def setUpTestData(cls):
         cls.test_user = User.objects.create(username="test@test.ru")
+        cls.new_title = "Test title"
+
 
     def setUp(self):
+        ToDoNote.objects.create(title=self.new_title, author=self.test_user)
         self.client = APIClient()
         self.token = Token.objects.create(user=self.test_user)  # fixme из БД достать пользователя
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
 
 
     def test_object_view(self):
-        # test_user = User.objects.get(username="test@test.ru")
-        # new_title = "Test title"
-        # note = Note.objects.create(title=new_title, author=test_user)
         todonote_pk = 1
         url = f"/api/v1/todolist/{todonote_pk}/"
         resp = self.client.get(url)
@@ -112,16 +113,17 @@ class TestNoteDetailAPIView(APITestCase):
         self.assertEqual(expected_status_code, resp.status_code)
 
         response_data = resp.data
-        # self.assertEqual(note.title, response_data["title"])
-        # self.assertEqual(note.id, response_data["id"])
         data = {
             "id": 1,
             "title": "Test title",
+            "author": 'test@test.ru',
             "task_description": "",
             "public": False,
-            "author": 1
+            "important": False,
         }
-        self.assertDictEqual(data, response_data)
+        self.assertEqual(data["id"], response_data["id"])
+        self.assertEqual(data["author"], response_data["author"])
+        self.assertEqual(data["important"], response_data["important"])
 
 
     def test_object_does_not_exist_view(self):
@@ -131,8 +133,6 @@ class TestNoteDetailAPIView(APITestCase):
         self.assertEqual(expected_status_code, resp.status_code)
 
     def test_update_object_view(self):
-        test_user = User.objects.get(username="test@test.ru")
-        title = "Test title"
         new_title = "New title"
         todonote_pk = 1
         url = f"/api/v1/todolist/{todonote_pk}/"
@@ -145,7 +145,7 @@ class TestNoteDetailAPIView(APITestCase):
         self.assertEqual(new_data["title"], resp.data["title"])
 
     def test_update_does_not_exist_view(self):
-        url = "/api/v1/todolist/1/"
+        url = "/api/v1/todolist/10/"
         new_title = "New title"
         new_data = {
             "title": new_title,
@@ -154,57 +154,57 @@ class TestNoteDetailAPIView(APITestCase):
         expected_status_code = status.HTTP_404_NOT_FOUND
         self.assertEqual(expected_status_code, resp.status_code)
 
-# class ToDoNoteRetrieveUpdateDestroyAPIView(APITestCase):
-#     USER_1 = dict(
-#         username="username_1",
-#         password="fake_password",
-#     )
-#     USER_2 = dict(
-#         username="username_2",
-#         password="fake_password",
-#     )
-#
-#     @classmethod
-#     def setUpTestData(cls):
-#         """
-#         Делаем двух пользователей в БД.
-#         Каждому из них назначаем по записи.
-#         """
-#         users = [
-#             User(**cls.USER_1),
-#             User(**cls.USER_2),
-#         ]
-#         User.objects.bulk_create(users)
-#         cls.db_user_1 = users[0]
-#
-#         tasks = [
-#             ToDoNote(title="title_1", author=users[0]),
-#             ToDoNote(title="title_2", author=users[1]),
-#         ]
-#         ToDoNote.objects.bulk_create(tasks)
-#
-#     def setUp(self) -> None:
-#         """При каждом тестовом методе, будем делать нового клиента и авторизовать его."""
-#         self.auth_user_1 = APIClient()
-#         self.auth_user_1.force_authenticate(user=self.db_user_1)  # так как не интересуют сами механизмы авторизации, авторизуем нашего пользователя принудительно
-#
-#     def test_get(self):
-#         todonote_pk = 1
-#         url = f"/api/v1/todolist/{todonote_pk}/"
-#         resp = self.auth_user_1.get(url)
-#         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-#
-#     def test_partial_update_other_task(self):
-#         todonote_pk = 2
-#         url = f"/api/v1/todolist/{todonote_pk}/"
-#         resp = self.auth_user_1.patch(url)
-#         self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
-#
-#     def test_update_other_task(self):
-#         todonote_pk = 2
-#         data = {
-#             "title": "fake_title",
-#         }
-#         url = f"/api/v1/todolist/{todonote_pk}/"
-#         resp = self.auth_user_1.put(url, data=data)
-#         self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+class ToDoNoteRetrieveUpdateDestroyAPIView(APITestCase):
+    USER_1 = dict(
+        username="username_1",
+        password="fake_password",
+    )
+    USER_2 = dict(
+        username="username_2",
+        password="fake_password",
+    )
+
+    @classmethod
+    def setUpTestData(cls):
+        """
+        Делаем двух пользователей в БД.
+        Каждому из них назначаем по записи.
+        """
+        users = [
+            User(**cls.USER_1),
+            User(**cls.USER_2),
+        ]
+        User.objects.bulk_create(users)
+        cls.db_user_1 = users[0]
+
+        tasks = [
+            ToDoNote(title="title_1", author=users[0]),
+            ToDoNote(title="title_2", author=users[1]),
+        ]
+        ToDoNote.objects.bulk_create(tasks)
+
+    def setUp(self) -> None:
+        """При каждом тестовом методе, будем делать нового клиента и авторизовать его."""
+        self.auth_user_1 = APIClient()
+        self.auth_user_1.force_authenticate(user=self.db_user_1)  # так как не интересуют сами механизмы авторизации, авторизуем нашего пользователя принудительно
+
+    def test_get(self):
+        todonote_pk = 1
+        url = f"/api/v1/todolist/{todonote_pk}/"
+        resp = self.auth_user_1.get(url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_partial_update_other_task(self):
+        todonote_pk = 2
+        url = f"/api/v1/todolist/{todonote_pk}/"
+        resp = self.auth_user_1.patch(url)
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_other_task(self):
+        todonote_pk = 2
+        data = {
+            "title": "fake_title",
+        }
+        url = f"/api/v1/todolist/{todonote_pk}/"
+        resp = self.auth_user_1.put(url, data=data)
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
