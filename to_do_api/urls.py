@@ -19,12 +19,13 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # path('todolist/', views.ToDoNotesAPIView.as_view()),
-    # path('todolist/', views.ToDoNoteListAPIView.as_view()),
-    path('todolist/', views.ToDoNoteListAPIViewWithFilters.as_view()),
-    path('todolist/public/', views.ToDoNotesPublicAPIView.as_view()),
-    path('todolist/<int:pk>/', views.ToDoNotesDetailGenericAPIView.as_view()),
-    # path('todolist/<int:pk>/', views.ToDoNotesDetailDeleteGenericAPIView.as_view()),
-    path('comments/', views.CommentListCreateAPIView.as_view()),
-    # path('comments/<int:pk>/', views.CommentDetailAPIView.as_view()),
+    path('api/v1/about/', views.IndexView.as_view()),
+    path('api/v1/todolist/', views.ToDoNotesAPIView.as_view()),
+    # path('api/v1/todolist/', views.ToDoNoteListAPIView.as_view()),
+    # path('api/v1/todolist/', views.ToDoNoteListAPIViewWithFilters.as_view()),
+    path('api/v1/todolist/public/', views.ToDoNotesPublicAPIView.as_view()),
+    path('api/v1/todolist/<int:pk>/', views.ToDoNotesDetailGenericAPIView.as_view()),
+    # path('api/v1/todolist/<int:pk>/', views.ToDoNotesDetailDeleteGenericAPIView.as_view()),
+    path('api/v1/comments/', views.CommentListCreateAPIView.as_view()),
+    # path('api/v1/comments/<int:pk>/', views.CommentDetailAPIView.as_view()),
 ]

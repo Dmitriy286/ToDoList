@@ -1,4 +1,6 @@
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.views import View
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, mixins
 from rest_framework.views import APIView
@@ -12,10 +14,19 @@ from rest_framework.permissions import IsAuthenticated
 from to_do.models import ToDoNote, Comment
 
 from . import serializers, filters, permissions
+from ToDoList import settings_local
 
+class IndexView(View):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        params = {
+            "user": request.user,
+            "server_version": settings_local.SERVER_VERSION,
+        }
+        return render(request, "to_do_api/about.html", params)
 
 class ToDoNotesAPIView(APIView):
-    permission_classes = (IsAuthenticated, )
+    permission_classes = [IsAuthenticated]
+
     def get(self, request: Request) -> Response:
         todonotes = ToDoNote.objects.all()
         serializer = serializers.ToDoNotesAPIViewSerializer(instance=todonotes, many=True)
@@ -36,7 +47,7 @@ class ToDoNotesAPIView(APIView):
         todonotes = ToDoNote.objects.all()
         todonotes.delete()
 
-        return Response("Все задачи удалены")
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
@@ -102,7 +113,7 @@ class ToDoNotesPublicAPIView(ListAPIView):
 
 
 class ToDoNotesDetailGenericAPIView(RetrieveUpdateDestroyAPIView):
-    permission_classes = (IsAuthenticated & permissions.OnlyAuthorEditToDoNote)
+    permission_classes = [IsAuthenticated & permissions.OnlyAuthorEditToDoNote]
     queryset = ToDoNote.objects.all()
     serializer_class = serializers.NoteSerializer
 

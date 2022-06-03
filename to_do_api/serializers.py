@@ -74,7 +74,8 @@ class NoteSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         str_ = ret['create_at'].strip()
-        create_at = datetime.strptime(str_, '%Y-%m-%dT%H:%M:%S.%fZ')
+        # create_at = datetime.strptime(str_, '%Y-%m-%dT%H:%M:%S.%fZ')
+        create_at = datetime.strptime(str_, '%Y-%m-%dT%H:%M:%S.%f')
         ret['create_at'] = create_at.strftime('%d %B %Y %H:%M:%S')
 
         return ret

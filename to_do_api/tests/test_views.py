@@ -5,6 +5,7 @@ from rest_framework import status
 from django.contrib.auth.models import User
 from django.test import TestCase
 from rest_framework.utils import json
+from rest_framework.authtoken.models import Token
 
 from to_do.models import ToDoNote
 
@@ -14,10 +15,15 @@ User = get_user_model()
 class TestToDoNoteListCreateAPIView(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        User.objects.create(username="test@test.ru")
+        cls.test_user = User.objects.create(username="test@test.ru")
+
+    def setUp(self):
+        self.client = APIClient()
+        self.token = Token.objects.create(user=self.test_user)  # fixme из БД достать пользователя
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
 
     def test_empty_list_objects(self):
-        url = "/todolist/"
+        url = "/api/v1/todolist/"
         resp = self.client.get(url)
         expected_status_code = status.HTTP_200_OK
         self.assertEqual(expected_status_code, resp.status_code)
@@ -31,7 +37,7 @@ class TestToDoNoteListCreateAPIView(APITestCase):
         test_user = User.objects.get(username="test@test.ru")
         ToDoNote.objects.create(title="Test title", author=test_user)
 
-        url = "/todolist/"
+        url = "/api/v1/todolist/"
         resp = self.client.get(url)
         expected_status_code = status.HTTP_200_OK
         self.assertEqual(expected_status_code, resp.status_code)
@@ -42,11 +48,12 @@ class TestToDoNoteListCreateAPIView(APITestCase):
 
     def test_create_object(self):
         new_title = "test_title"
-        url = "/todolist/"
+        url = "/api/v1/todolist/"
         data = {
             "title": new_title,
-            "author": 1
         }
+
+        self.client.force_login(user=self.test_user)
         resp = self.client.post(url, json.dumps(data), content_type="application/json")
         # json.dumps(data)
         # self.response = self.c.post('/pipeline-endpoint', json_data, content_type="application/json")
@@ -60,7 +67,7 @@ class TestToDoNoteListCreateAPIView(APITestCase):
         test_user = User.objects.get(username="test@test.ru")
         ToDoNote.objects.create(title="Test title", author=test_user)
 
-        url = "/todolist/"
+        url = "/api/v1/todolist/"
         resp = self.client.get(url)
         response_data = resp.data
         self.assertEqual(2, len(response_data))
@@ -77,12 +84,21 @@ class TestToDoNoteListCreateAPIView(APITestCase):
 
 
 class TestNoteDetailAPIView(APITestCase):
+    # @classmethod
+    # def setUpTestData(cls):
+    #     User.objects.create(username="test@test.ru")
+    #     test_user = User.objects.get(username="test@test.ru")
+    #     new_title = "Test title"
+    #     ToDoNote.objects.create(title=new_title, author=test_user)
+
     @classmethod
     def setUpTestData(cls):
-        User.objects.create(username="test@test.ru")
-        test_user = User.objects.get(username="test@test.ru")
-        new_title = "Test title"
-        ToDoNote.objects.create(title=new_title, author=test_user)
+        cls.test_user = User.objects.create(username="test@test.ru")
+
+    def setUp(self):
+        self.client = APIClient()
+        self.token = Token.objects.create(user=self.test_user)  # fixme из БД достать пользователя
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
 
 
     def test_object_view(self):
@@ -90,7 +106,7 @@ class TestNoteDetailAPIView(APITestCase):
         # new_title = "Test title"
         # note = Note.objects.create(title=new_title, author=test_user)
         todonote_pk = 1
-        url = f"/todolist/{todonote_pk}/"
+        url = f"/api/v1/todolist/{todonote_pk}/"
         resp = self.client.get(url)
         expected_status_code = status.HTTP_200_OK
         self.assertEqual(expected_status_code, resp.status_code)
@@ -109,7 +125,7 @@ class TestNoteDetailAPIView(APITestCase):
 
 
     def test_object_does_not_exist_view(self):
-        url = "/todolist/10/"
+        url = "/api/v1/todolist/10/"
         resp = self.client.get(url)
         expected_status_code = status.HTTP_404_NOT_FOUND
         self.assertEqual(expected_status_code, resp.status_code)
@@ -119,7 +135,7 @@ class TestNoteDetailAPIView(APITestCase):
         title = "Test title"
         new_title = "New title"
         todonote_pk = 1
-        url = f"/todolist/{todonote_pk}/"
+        url = f"/api/v1/todolist/{todonote_pk}/"
         new_data = {
             "title": new_title,
         }
@@ -129,7 +145,7 @@ class TestNoteDetailAPIView(APITestCase):
         self.assertEqual(new_data["title"], resp.data["title"])
 
     def test_update_does_not_exist_view(self):
-        url = "/todolist/1/"
+        url = "/api/v1/todolist/1/"
         new_title = "New title"
         new_data = {
             "title": new_title,
