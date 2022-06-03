@@ -21,8 +21,7 @@ class ToDoNote(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
-    def __str__(self):
-        return f'Задача: {self.title} № {self.id}'
+
 
 
     class Meta:
@@ -37,3 +36,14 @@ class ToDoNote(models.Model):
 
 
     status = models.IntegerField(default=Status.ACTIVE, choices=Status.choices, verbose_name="Статус")
+
+    def __str__(self):
+        return f'Задача: {self.title}'
+
+class Comment(models.Model):
+    todonote = models.ForeignKey(ToDoNote, on_delete=models.CASCADE, related_name='todocomments')
+    message = models.TextField(default="", verbose_name="Комментарий")
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'Комментарий к задаче {self.todonote.title}, от {self.author}'
