@@ -7,13 +7,15 @@ from rest_framework.generics import ListAPIView, GenericAPIView, RetrieveUpdateD
 from rest_framework.request import Request
 from rest_framework.response import Response
 from django.contrib.auth.models import User
+from rest_framework.permissions import IsAuthenticated
 
 from to_do.models import ToDoNote, Comment
 
-from . import serializers, filters
+from . import serializers, filters, permissions
 
 
 class ToDoNotesAPIView(APIView):
+    permission_classes = (IsAuthenticated, )
     def get(self, request: Request) -> Response:
         todonotes = ToDoNote.objects.all()
         serializer = serializers.ToDoNotesAPIViewSerializer(instance=todonotes, many=True)
@@ -100,6 +102,7 @@ class ToDoNotesPublicAPIView(ListAPIView):
 
 
 class ToDoNotesDetailGenericAPIView(RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsAuthenticated & permissions.OnlyAuthorEditToDoNote)
     queryset = ToDoNote.objects.all()
     serializer_class = serializers.NoteSerializer
 
@@ -114,6 +117,7 @@ class ToDoNotesDetailGenericAPIView(RetrieveUpdateDestroyAPIView):
 
 
 class CommentListCreateAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
     def get(self, request: Request) -> Response:
         comments = Comment.objects.all()
         return Response([serializers.serialize_comment_created(comment) for comment in comments])
